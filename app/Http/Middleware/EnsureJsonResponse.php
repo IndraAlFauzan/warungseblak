@@ -15,11 +15,22 @@ class EnsureJsonResponse
      */
     public function handle(Request $request, Closure $next)
     {
+        // Cek jika header Accept tidak berisi application/json
+        if (!$request->expectsJson()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Accept header must be application/json',
+            ], 406); // HTTP 406 Not Acceptable
+        }
+
         $response = $next($request);
 
-        // Pastikan respons selalu JSON
-        if ($response instanceof \Symfony\Component\HttpFoundation\Response && !$response->headers->contains('Content-Type', 'application/json')) {
-            $response->headers->set('Content-Type', 'application/json');
+        // Jika respons bukan JSON, tambahkan Content-Type header
+        if ($response instanceof \Symfony\Component\HttpFoundation\Response) {
+            $contentType = $response->headers->get('Content-Type');
+            if (strpos($contentType, 'application/json') === false) {
+                $response->headers->set('Content-Type', 'application/json');
+            }
         }
 
         return $response;

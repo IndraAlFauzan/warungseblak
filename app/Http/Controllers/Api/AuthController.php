@@ -90,26 +90,26 @@ class AuthController extends Controller
 
     public function me()
     {
-        try {
+        // try {
             $user = Auth::guard('api')->user();
 
-            if (!$user) {
-                throw new \Exception('No authenticated user found');
-            }
+        //     if (!$user) {
+        //         throw new \Exception('No authenticated user found');
+        //     }
 
             return response()->json([
                 'success' => true,
                 'message' => 'User profile retrieved successfully',
                 'data' => $user,
             ], 200);
-        } catch (\Exception $e) {
-            Log::error('Error in me() function:', ['error' => $e->getMessage()]);
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to retrieve user profile',
-                'error'   => $e->getMessage(),
-            ], 500);
-        }
+        // } catch (\Exception $e) {
+        //     Log::error('Error in me() function:', ['error' => $e->getMessage()]);
+        //     return response()->json([
+        //         'success' => false,
+        //         'message' => 'Failed to retrieve user profile',
+        //         'error'   => $e->getMessage(),
+        //     ], 500);
+        // }
     }
 
 
