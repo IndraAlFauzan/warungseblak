@@ -14,6 +14,8 @@ class Product extends Model
     // Satu produk milik satu kategori (BelongsTo).
     // Produk dapat muncul di banyak transaksi melalui detail transaksi (HasManyThrough tidak langsung diperlukan).
 
+    protected $appends = ['photo_url'];
+
     public function category()
     {
         return $this->belongsTo(Category::class);
@@ -22,5 +24,14 @@ class Product extends Model
     public function transactionDetails()
     {
         return $this->hasMany(TransactionDetail::class);
+    }
+
+    // Accessor untuk URL Foto
+    public function getPhotoUrlAttribute()
+    {
+        if ($this->photo) {
+            return asset('storage/' . $this->photo); // URL lengkap
+        }
+        return null; // Jika foto tidak ada
     }
 }
