@@ -3,7 +3,10 @@
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\FlavorController;
+use App\Http\Controllers\Api\PaymentMethodController;
+use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\SpicyLevelController;
+use App\Http\Controllers\Api\TransactionController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -41,6 +44,30 @@ Route::middleware(['json','auth:api', 'role:admin' ])->group(function () {
     Route::get('/spicy-levels/{id}', [SpicyLevelController::class, 'show']);
     Route::put('/spicy-levels/{id}', [SpicyLevelController::class, 'update']);
     Route::delete('/spicy-levels/{id}', [SpicyLevelController::class, 'destroy']);
+});
+
+Route::middleware(['json','auth:api', 'role:admin' ])->group(function () {
+    Route::get('/products', [ProductController::class, 'index']);
+    Route::post('/products', [ProductController::class, 'store']);
+    Route::get('/products/{id}', [ProductController::class, 'show']);
+    Route::put('/products/{id}', [ProductController::class, 'update']);
+    Route::delete('/products/{id}', [ProductController::class, 'destroy']);
+
+});
+
+Route::middleware(['json','auth:api', 'role:admin' ])->group(function () {
+    Route::get('/payment-methods', [PaymentMethodController::class, 'index']);
+    Route::post('/payment-methods', [PaymentMethodController::class, 'store']);
+    Route::get('/payment-methods/{id}', [PaymentMethodController::class, 'show']);
+    Route::put('/payment-methods/{id}', [PaymentMethodController::class, 'update']);
+    Route::delete('/payment-methods/{id}', [PaymentMethodController::class, 'destroy']);
+});
+
+Route::middleware(['json','auth:api', 'role:admin' ])->group(function () {
+    Route::get('/transactions', [TransactionController::class, 'index']);
+    Route::post('/transactions', [TransactionController::class, 'store']);
+    Route::get('/transactions/{id}', [TransactionController::class, 'show']);
+    Route::delete('/transactions/{id}', [TransactionController::class, 'destroy']);
 });
 
 
