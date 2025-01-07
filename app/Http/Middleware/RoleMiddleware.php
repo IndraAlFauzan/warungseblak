@@ -13,9 +13,12 @@ class RoleMiddleware
      *
      * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      */
-    public function handle(Request $request, Closure $next, $role)
+    public function handle(Request $request, Closure $next, ...$roles)
     {
-        if (Auth::guard('api')->user()->role !== $role) {
+        $user = Auth::guard('api')->user();
+
+        // Jika user tidak memiliki salah satu role
+        if (!in_array($user->role, $roles)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Forbidden: You do not have access to this resource',

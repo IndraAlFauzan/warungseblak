@@ -26,5 +26,12 @@ Route::middleware(['json','auth:api', 'role:admin' ])->group(function () {
     Route::delete('/categories/{id}', [CategoryController::class, 'destroy']);
 });
 
+Route::middleware(['json','auth:api', 'role:admin' ])->group(function () {
+    Route::get('/flavors', [FlavorController::class, 'index']);
+    Route::post('/flavors', [FlavorController::class, 'store']);
+    Route::get('/flavors/{id}', [FlavorController::class, 'show']);
+    Route::put('/flavors/{id}', [FlavorController::class, 'update']);
+    Route::delete('/flavors/{id}', [FlavorController::class, 'destroy']);
+});
 
 

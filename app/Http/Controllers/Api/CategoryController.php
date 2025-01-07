@@ -27,8 +27,9 @@ class CategoryController extends Controller
 
         return response()->json([
             'success' => true,
+            'message' => 'Categories retrieved successfully',
             'data' => $categories,
-        ]);
+        ], 200);
     }
 
     /**
@@ -86,6 +87,7 @@ class CategoryController extends Controller
 
         return response()->json([
             'success' => true,
+            'message' => '$Category retrieved successfully',
             'data' => $category,
         ],201);
     }
@@ -118,7 +120,7 @@ class CategoryController extends Controller
                 'success' => true,
                 'message' => 'Category updated successfully',
                 'data' => $category,
-            ]);
+            ], 200);
         } catch (\Exception $e) {
             // Error saat memperbarui data
             return response()->json([
@@ -150,7 +152,7 @@ class CategoryController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Category deleted successfully',
-            ]);
+            ], 200);
         } catch (\Exception $e) {
             // Error saat menghapus data
             return response()->json([
