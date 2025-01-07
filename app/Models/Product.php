@@ -11,8 +11,8 @@ class Product extends Model
 
     protected $fillable = ['category_id', 'name', 'description', 'price', 'stock', 'photo'];
 
-// Satu produk milik satu kategori (BelongsTo).
-// Produk dapat muncul di banyak transaksi melalui detail transaksi (HasManyThrough tidak langsung diperlukan).
+    // Satu produk milik satu kategori (BelongsTo).
+    // Produk dapat muncul di banyak transaksi melalui detail transaksi (HasManyThrough tidak langsung diperlukan).
 
     public function category()
     {
