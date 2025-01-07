@@ -13,6 +13,8 @@ class Product extends Model
 
     // Satu produk milik satu kategori (BelongsTo).
     // Produk dapat muncul di banyak transaksi melalui detail transaksi (HasManyThrough tidak langsung diperlukan).
+     // Menyembunyikan kolom "photo" dari JSON respons
+     protected $hidden = ['photo'];
 
     protected $appends = ['photo_url'];
 

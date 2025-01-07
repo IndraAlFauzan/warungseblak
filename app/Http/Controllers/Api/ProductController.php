@@ -11,7 +11,22 @@ class ProductController extends Controller
 {
     public function index()
     {
-        $products = Product::with('category')->get();
+        $products = Product::with('category', )->get();
+
+        $products = $products->map(function ($product) {
+            return [
+                'id' => $product->id,
+                'category_id' => $product->category_id,
+                'name' => $product->name,
+                'description' => $product->description,
+                'price' => $product->price,
+                'stock' => $product->stock,
+                'photo_url' => $product->photo_url, // Hanya menyertakan photo_url
+                'created_at' => $product->created_at,
+                'updated_at' => $product->updated_at,
+                'category' => $product->category->name,
+            ];
+        });
 
         if ($products->isEmpty()) {
             return response()->json([
@@ -24,7 +39,7 @@ class ProductController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Products retrieved successfully',
-            'data' => $products, // Langsung return $products
+            'data' => $products // Langsung return $products
         ], 200);
     }
 
@@ -66,6 +81,19 @@ class ProductController extends Controller
     public function show($id)
     {
         $product = Product::with('category')->find($id);
+        
+        $product = [
+            'id' => $product->id,
+            'category_id' => $product->category_id,
+            'name' => $product->name,
+            'description' => $product->description,
+            'price' => $product->price,
+            'stock' => $product->stock,
+            'photo_url' => $product->photo_url, // Hanya menyertakan photo_url
+            'created_at' => $product->created_at,
+            'updated_at' => $product->updated_at,
+            'category' => $product->category->name,
+        ];
 
         if (!$product) {
             return response()->json([
