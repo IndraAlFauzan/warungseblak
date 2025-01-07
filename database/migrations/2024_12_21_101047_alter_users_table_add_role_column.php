@@ -11,7 +11,7 @@ class AlterUsersTableAddRoleColumn extends Migration
         Schema::table('users', function (Blueprint $table) {
             // Tambahkan kolom role jika belum ada
             if (!Schema::hasColumn('users', 'role')) {
-                $table->enum('role', ['admin', 'kasir'])->default('cashier')->after('password');
+                $table->enum('role', ['admin', 'kasir'])->default('kasir')->after('password');
             }
         });
     }
