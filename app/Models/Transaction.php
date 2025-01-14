@@ -9,7 +9,15 @@ class Transaction extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['user_id', 'payment_method_id', 'total'];
+    protected $fillable = [
+        'user_id',
+        'payment_method_id',
+        'total',
+        'payment_amount',
+        'change_amount',
+        'service_type',
+        'status'
+    ];
 
     // Satu transaksi dibuat oleh satu kasir (BelongsTo ke users).
     // Satu transaksi memiliki banyak detail transaksi (HasMany).

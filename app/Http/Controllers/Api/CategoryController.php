@@ -15,7 +15,7 @@ class CategoryController extends Controller
      */
     public function index()
     {
-        $categories = Category::all();
+        $categories = Category::orderBy('name', 'asc')->get();
 
         // Handle jika data kosong
         if ($categories->isEmpty()) {
@@ -25,10 +25,21 @@ class CategoryController extends Controller
             ], 404);
         }
 
+        //sort data by name
+
+
+        $formattedCategories = $categories->map(function ($category) {
+            return [
+                'id' => $category->id,
+                'name' => $category->name,
+
+            ];
+        });
+
         return response()->json([
             'success' => true,
             'message' => 'Categories retrieved successfully',
-            'data' => $categories,
+            'data' => $formattedCategories,
         ], 200);
     }
 
@@ -53,7 +64,7 @@ class CategoryController extends Controller
                     'message' => 'Kategory already exists',
                 ], 500);
             }
-            
+
 
             return response()->json([
                 'success' => true,
@@ -89,7 +100,7 @@ class CategoryController extends Controller
             'success' => true,
             'message' => '$Category retrieved successfully',
             'data' => $category,
-        ],201);
+        ], 201);
     }
 
     /**

@@ -18,12 +18,9 @@ class ProductController extends Controller
                 'id' => $product->id,
                 'category_id' => $product->category_id,
                 'name' => $product->name,
-                'description' => $product->description,
                 'price' => $product->price,
                 'stock' => $product->stock,
                 'photo_url' => $product->photo_url, // Hanya menyertakan photo_url
-                'created_at' => $product->created_at,
-                'updated_at' => $product->updated_at,
                 'category' => $product->category->name,
             ];
         });

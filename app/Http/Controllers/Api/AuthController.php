@@ -67,24 +67,32 @@ class AuthController extends Controller
             'password' => 'required|string|min:6',
         ]);
 
+        
+
         // Attempt login dengan email dan password
         if (!$token = Auth::guard('api')->attempt($validatedData)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Invalid email or password',
+                'data'    => [],
             ], 401);
         }
+
+        $user = Auth::guard('api')->user();
+
+        $formatedResponse = [
+                'access_token' => $token,
+                'token_type' => 'Bearer',
+                'expires_in' => 0,
+                'user' => $user->name,
+        
+        ];
 
         // Return token jika sukses
         return response()->json([
             'success' => true,
             'message' => 'Login successful',
-            'data' => [
-                'access_token' => $token,
-                'token_type' => 'Bearer',
-                'expires_in' => config('jwt.ttl') * 60,
-                'user' => Auth::guard('api')->user(),
-            ],
+            'data' => $formatedResponse,
         ], 200);
     }
 

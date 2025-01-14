@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\FlavorController;
 use App\Http\Controllers\Api\PaymentMethodController;
 use App\Http\Controllers\Api\ProductController;
+use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\SpicyLevelController;
 use App\Http\Controllers\Api\TransactionController;
 use Illuminate\Http\Request;
@@ -23,6 +24,8 @@ Route::middleware(['json','auth:api', 'role:admin' ])->group(function () {
 });
 
 Route::middleware(['json','auth:api', 'role:admin' ])->group(function () {
+    //Route::apiResource('categories', CategoryController::class);
+
     Route::get('/categories', [CategoryController::class, 'index']);
     Route::post('/categories', [CategoryController::class, 'store']);
     Route::get('/categories/{id}', [CategoryController::class, 'show']);
@@ -68,6 +71,13 @@ Route::middleware(['json','auth:api', 'role:admin' ])->group(function () {
     Route::post('/transactions', [TransactionController::class, 'store']);
     Route::get('/transactions/{id}', [TransactionController::class, 'show']);
     Route::delete('/transactions/{id}', [TransactionController::class, 'destroy']);
+});
+
+Route::middleware(['json','auth:api', 'role:admin' ])->group(function () {
+    Route::get('/reports/daily', [ReportController::class, 'daily']);
+    Route::get('/reports/monthly', [ReportController::class, 'monthly']);
+    Route::get('/reports/top-products', [ReportController::class, 'topProducts']);
+    Route::get('/reports/by-payment', [ReportController::class, 'byPayment']);
 });
 
 

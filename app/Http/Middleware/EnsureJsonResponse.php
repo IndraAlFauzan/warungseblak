@@ -21,21 +21,17 @@ class EnsureJsonResponse
         //     $request->headers->set('Accept', 'application/json');
         // }
 
+        // Memaksa request untuk menganggap bahwa Accept adalah application/json
+        $request->headers->set('Accept', 'application/json');
+
         $response = $next($request);
 
-        // Jika respons bukan JSON, tambahkan Content-Type header
+        // Memeriksa dan menetapkan Content-Type dari response
         if ($response instanceof \Symfony\Component\HttpFoundation\Response) {
             $contentType = $response->headers->get('Content-Type');
-            $accept = $response->headers->get('Accept');
-            if (strpos($accept, 'application/json') === false) {
-                $response->headers->set('Accept', 'application/json');
-            }
             if (strpos($contentType, 'application/json') === false) {
                 $response->headers->set('Content-Type', 'application/json');
             }
-
-            
-            
         }
 
         return $response;
