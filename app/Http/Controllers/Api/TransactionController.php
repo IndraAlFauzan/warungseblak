@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreTransactionRequest;
+use App\Http\Requests\UpdateTransactionRequest;
 use App\Models\Product;
 use App\Models\Transaction;
 use App\Models\TransactionDetail;
@@ -230,6 +231,125 @@ class TransactionController extends Controller
         ];
 
         return response()->json(['success' => true, 'message' => 'Transaction retrieved', 'data' => $data], 200);
+    }
+
+    /**
+     * Update existing transaction by adding new items.
+     * Only allows adding items to 'pending' transactions.
+     *
+     * @param UpdateTransactionRequest $request
+     * @param int $id
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function update(UpdateTransactionRequest $request, $id)
+    {
+        $v = $request->validated();
+
+        try {
+            $transaction = Transaction::with(['details'])->find($id);
+
+            if (!$transaction) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Transaction not found',
+                    'data' => []
+                ], 404);
+            }
+
+            // Hanya transaksi dengan status 'pending' yang bisa diupdate
+            if ($transaction->status !== 'pending') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot update transaction. Only pending transactions can be updated.',
+                    'data' => []
+                ], 422);
+            }
+
+            DB::transaction(function () use (&$transaction, $v) {
+                $additionalTotal = 0;
+
+                // Validasi stok untuk item baru yang akan ditambahkan
+                foreach ($v['details'] as $d) {
+                    $product = Product::lockForUpdate()->findOrFail($d['product_id']);
+                    if ($product->stock < $d['quantity']) {
+                        abort(422, "Stock '{$product->name}' kurang. Tersisa: {$product->stock}");
+                    }
+                    $subtotal = $product->price * $d['quantity'];
+                    $additionalTotal += $subtotal;
+                }
+
+                // Tambahkan detail baru + kurangi stok
+                foreach ($v['details'] as $d) {
+                    $product = Product::lockForUpdate()->findOrFail($d['product_id']);
+                    $product->decrement('stock', $d['quantity']);
+
+                    TransactionDetail::create([
+                        'transaction_id' => $transaction->id,
+                        'product_id' => $d['product_id'],
+                        'quantity' => $d['quantity'],
+                        'price' => $product->price,
+                        'subtotal' => $product->price * $d['quantity'],
+                        'note' => $d['note'] ?? null,
+                        'flavor_id' => $d['flavor_id'] ?? null,
+                        'spicy_level_id' => $d['spicy_level_id'] ?? null,
+                    ]);
+                }
+
+                // Update total transaksi
+                $newGrandTotal = $transaction->grand_total + $additionalTotal;
+                $newBalanceDue = $transaction->balance_due + $additionalTotal;
+
+                $transaction->update([
+                    'grand_total' => $newGrandTotal,
+                    'balance_due' => $newBalanceDue,
+                ]);
+            });
+
+            // Load updated data untuk response
+            $transaction->load(['table', 'details.product', 'details.flavor', 'details.spicyLevel']);
+            $formatted = [
+                'transaction_id' => $transaction->id,
+                'order_no' => $transaction->order_no,
+                'created_at' => $transaction->created_at,
+                'updated_at' => $transaction->updated_at,
+                'table_id' => $transaction->table_id,
+                'table_no' => optional($transaction->table)->table_no,
+                'customer_name' => $transaction->customer_name,
+                'user_id' => $transaction->user_id,
+                'service_type' => $transaction->service_type,
+                'status' => $transaction->status,
+                'grand_total' => $transaction->grand_total,
+                'paid_total' => $transaction->paid_total,
+                'balance_due' => $transaction->balance_due,
+                'details' => $transaction->details->map(function ($d) {
+                    return [
+                        'id' => $d->id,
+                        'product_id' => $d->product_id,
+                        'name_product' => $d->product->name,
+                        'quantity' => $d->quantity,
+                        'flavor_id' => $d->flavor_id,
+                        'flavor' => optional($d->flavor)->name,
+                        'spicy_level_id' => $d->spicy_level_id,
+                        'spicy_level' => optional($d->spicyLevel)->name,
+                        'note' => $d->note,
+                        'price' => $d->price,
+                        'subtotal' => $d->subtotal,
+                    ];
+                }),
+            ];
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Transaction updated successfully',
+                'data' => $formatted
+            ], 200);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update transaction',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     public function destroy($id)
