@@ -69,7 +69,9 @@ Route::middleware(['json', 'auth:api', 'role:admin'])->group(function () {
 });
 
 Route::middleware(['json', 'auth:api', 'role:admin'])->group(function () {
-    Route::get('/transactions', [TransactionController::class, 'index']);
+    Route::get('/all-transactions', [TransactionController::class, 'index']);
+    Route::get('/transactions', [TransactionController::class, 'indexByStatus']);
+
     Route::post('/transactions', [TransactionController::class, 'store']);
     Route::get('/transactions/{id}', [TransactionController::class, 'show']);
     Route::delete('/transactions/{id}', [TransactionController::class, 'destroy']);

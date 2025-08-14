@@ -12,7 +12,53 @@ use Illuminate\Support\Facades\DB;
 
 class TransactionController extends Controller
 {
+    /**
+     * Get transactions with 'pending' status.
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function index()
+    {
+        $query = Transaction::with(['user', 'table', 'details.product', 'details.flavor', 'details.spicyLevel']);
+
+        // get all transactions
+        $transactions = $query->orderByDesc('created_at')->get();
+
+        $data = $transactions->map(function ($t) {
+            return [
+                'transaction_id' => $t->id,
+                'order_no' => $t->order_no,
+                'created_at' => $t->created_at,
+                'table_no' => optional($t->table)->table_no,
+                'customer_name' => $t->customer_name,
+                'user_id' => $t->user_id,
+                'service_type' => $t->service_type,
+                'status' => $t->status,
+                'grand_total' => $t->grand_total,
+                'paid_total' => $t->paid_total,
+                'balance_due' => $t->balance_due,
+                'details' => $t->details->map(function ($d) {
+                    return [
+                        'id' => $d->id,
+                        'product_id' => $d->product_id,
+                        'name_product' => $d->product->name,
+                        'quantity' => $d->quantity,
+                        'flavor_id' => $d->flavor_id,
+                        'flavor' => optional($d->flavor)->name,
+                        'spicy_level_id' => $d->spicy_level_id,
+                        'spicy_level' => optional($d->spicyLevel)->name,
+                        'note' => $d->note,
+                        'price' => $d->price,
+                        'subtotal' => $d->subtotal,
+                    ];
+                }),
+            ];
+        });
+
+        return response()->json(['success' => true, 'message' => 'Transactions retrieved', 'data' => $data], 200);
+    }
+
+    public function indexByStatus()
     {
         $query = Transaction::with(['user', 'table', 'details.product', 'details.flavor', 'details.spicyLevel']);
 
