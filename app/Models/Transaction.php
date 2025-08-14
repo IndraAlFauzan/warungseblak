@@ -16,7 +16,12 @@ class Transaction extends Model
         'payment_amount',
         'change_amount',
         'service_type',
-        'status'
+    ];
+
+    protected $casts = [
+        'total' => 'double',
+        'payment_amount' => 'double',
+        'change_amount' => 'double',
     ];
 
     // Satu transaksi dibuat oleh satu kasir (BelongsTo ke users).

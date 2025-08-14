@@ -14,10 +14,20 @@ class PaymentMethodController extends Controller
         if ($methods->isEmpty()) {
             return response()->json(['success' => false, 'message' => 'No payment methods found'], 404);
         }
-        return response()->json(['success' => true, 
-        'message' => 'Payment methods retrieved successfully',
-        'data' => $methods],
-         200);
+        $methods = $methods->map(function ($method) {
+            return [
+                'id' => $method->id,
+                'name' => $method->name,
+            ];
+        });
+        return response()->json(
+            [
+                'success' => true,
+                'message' => 'Payment methods retrieved successfully',
+                'data' => $methods
+            ],
+            200
+        );
     }
 
     public function store(Request $request)
@@ -33,9 +43,11 @@ class PaymentMethodController extends Controller
         if (!$method) {
             return response()->json(['success' => false, 'message' => 'Payment method not found'], 404);
         }
-        return response()->json(['success' => true,
-        'message' => 'Payment method retrieved successfully'
-        , 'data' => $method], 200);
+        return response()->json([
+            'success' => true,
+            'message' => 'Payment method retrieved successfully',
+            'data' => $method
+        ], 200);
     }
 
     public function update(Request $request, $id)
@@ -46,9 +58,12 @@ class PaymentMethodController extends Controller
         }
         $validated = $request->validate(['name' => 'required|string|unique:payment_methods,name,' . $id, 'description' => 'nullable|string']);
         $method->update($validated);
-        return response()->json(['success' => true,
-        
-        'message' => 'Payment method updated successfully', 'data' => $method], 200);
+        return response()->json([
+            'success' => true,
+
+            'message' => 'Payment method updated successfully',
+            'data' => $method
+        ], 200);
     }
 
     public function destroy($id)

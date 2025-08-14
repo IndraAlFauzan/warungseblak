@@ -11,10 +11,12 @@ class Product extends Model
 
     protected $fillable = ['category_id', 'name', 'description', 'price', 'stock', 'photo'];
 
+    protected $casts = ['price' => 'double', 'stock' => 'integer'];
+
     // Satu produk milik satu kategori (BelongsTo).
     // Produk dapat muncul di banyak transaksi melalui detail transaksi (HasManyThrough tidak langsung diperlukan).
-     // Menyembunyikan kolom "photo" dari JSON respons
-     protected $hidden = ['photo'];
+    // Menyembunyikan kolom "photo" dari JSON respons
+    protected $hidden = ['photo'];
 
     protected $appends = ['photo_url'];
 

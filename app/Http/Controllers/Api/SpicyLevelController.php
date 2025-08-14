@@ -14,6 +14,13 @@ class SpicyLevelController extends Controller
         if ($spicyLevels->isEmpty()) {
             return response()->json(['success' => false, 'message' => 'No spicy levels found'], 404);
         }
+
+        $spicyLevels = $spicyLevels->map(function ($spicyLevel) {
+            return [
+                'id' => $spicyLevel->id,
+                'name' => $spicyLevel->name
+            ];
+        });
         return response()->json(['success' => true, 'data' => $spicyLevels], 200);
     }
 
@@ -30,6 +37,10 @@ class SpicyLevelController extends Controller
         if (!$spicyLevel) {
             return response()->json(['success' => false, 'message' => 'Spicy level not found'], 404);
         }
+        $spicyLevel = [
+            'id' => $spicyLevel->id,
+            'name' => $spicyLevel->name
+        ];
         return response()->json(['success' => true, 'data' => $spicyLevel], 200);
     }
 

@@ -67,7 +67,7 @@ class AuthController extends Controller
             'password' => 'required|string|min:6',
         ]);
 
-        
+
 
         // Attempt login dengan email dan password
         if (!$token = Auth::guard('api')->attempt($validatedData)) {
@@ -81,11 +81,13 @@ class AuthController extends Controller
         $user = Auth::guard('api')->user();
 
         $formatedResponse = [
-                'access_token' => $token,
-                'token_type' => 'Bearer',
-                'expires_in' => 0,
-                'user' => $user->name,
-        
+            'access_token' => $token,
+            'token_type' => 'Bearer',
+            'expires_in' => 0,
+            'user_id' => $user->id,
+            'user' => $user->name,
+
+
         ];
 
         // Return token jika sukses
@@ -99,17 +101,17 @@ class AuthController extends Controller
     public function me()
     {
         // try {
-            $user = Auth::guard('api')->user();
+        $user = Auth::guard('api')->user();
 
         //     if (!$user) {
         //         throw new \Exception('No authenticated user found');
         //     }
 
-            return response()->json([
-                'success' => true,
-                'message' => 'User profile retrieved successfully',
-                'data' => $user,
-            ], 200);
+        return response()->json([
+            'success' => true,
+            'message' => 'User profile retrieved successfully',
+            'data' => $user,
+        ], 200);
         // } catch (\Exception $e) {
         //     Log::error('Error in me() function:', ['error' => $e->getMessage()]);
         //     return response()->json([

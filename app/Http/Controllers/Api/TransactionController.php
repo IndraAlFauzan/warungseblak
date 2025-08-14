@@ -12,45 +12,13 @@ class TransactionController extends Controller
 {
     public function index()
     {
+        // Ambil semua transaksi dengan relasi yang diperlukan urutkan dari data terbaru
         // Ambil semua transaksi dengan relasi yang diperlukan
-    $transactions = Transaction::with(['user', 'paymentMethod', 'details.product', 'details.flavor', 'details.spicyLevel'])->get();
+        $transactions = Transaction::with(['user', 'paymentMethod', 'details.product', 'details.flavor', 'details.spicyLevel'])
+            ->orderBy('created_at', 'desc')
+            ->get();
 
-    if ($transactions->isEmpty()) {
-        return response()->json([
-            'success' => false,
-            'message' => 'No transactions found',
-            'data' => [],
-        ], 404);
-    }
-
-    // Format ulang data untuk respons
-    $formattedTransactions = $transactions->map(function ($transaction) {
-        return [
-            'transaction_id' => $transaction->id,
-            'user_id' => $transaction->user_id,
-            'payment_method_id' => $transaction->payment_method_id,
-            'total' => $transaction->total,
-            'name_user' => $transaction->user->name,
-            'payment_method' => $transaction->paymentMethod->name,
-            'service_type' => $transaction->service_type,
-            'status' => $transaction->status,
-            
-            'details' => $transaction->details->map(function ($detail) {
-                return [
-                    'id' => $detail->id,
-                    'product_id' => $detail->product_id,
-                    'name_product' => $detail->product->name,
-                    'quantity' => $detail->quantity,
-                    'flavor' => $detail->flavor->name ?? null,
-                    'spicy_level' => $detail->spicyLevel->name ?? null,
-                    'note' => $detail->note,
-                    'price' => $detail->price,
-                    'subtotal' => $detail->subtotal,
-                ];
-            }),
-        ];
-    });
-    if ($transactions->isEmpty()) {
+        if ($transactions->isEmpty()) {
             return response()->json([
                 'success' => false,
                 'message' => 'No transactions found',
@@ -58,14 +26,42 @@ class TransactionController extends Controller
             ], 404);
         }
 
-    return response()->json([
-        'success' => true,
-        'message' => 'Transactions retrieved successfully',
-        'data' => $formattedTransactions,
-    ], 200);
+        // Format ulang data untuk respons
+        $formattedTransactions = $transactions->map(function ($transaction) {
+            return [
+                'transaction_id' => $transaction->id,
+                'created_at' => $transaction->created_at,
+                'user_id' => $transaction->user_id,
+                'payment_method_id' => $transaction->payment_method_id,
+                'total' => $transaction->total,
+                'payment_amount' => $transaction->payment_amount,
+                'change_amount' => $transaction->change_amount,
+                'name_user' => $transaction->user->name,
+                'payment_method' => $transaction->paymentMethod->name,
+                'service_type' => $transaction->service_type,
+                'details' => $transaction->details->map(function ($detail) {
+                    return [
+                        'id' => $detail->id,
+                        'product_id' => $detail->product_id,
+                        'name_product' => $detail->product->name,
+                        'quantity' => $detail->quantity,
+                        'flavor_id' => $detail->flavor_id ?? null,
+                        'flavor' => $detail->flavor->name ?? null,
+                        'spicy_level_id' => $detail->spicy_level_id ?? null,
+                        'spicy_level' => $detail->spicyLevel->name ?? null,
+                        'note' => $detail->note,
+                        'price' => $detail->price,
+                        'subtotal' => $detail->subtotal,
+                    ];
+                }),
+            ];
+        });
 
-        
-
+        return response()->json([
+            'success' => true,
+            'message' => 'Transactions retrieved successfully',
+            'data' => $formattedTransactions,
+        ], 200);
     }
 
     public function store(Request $request)
@@ -121,7 +117,6 @@ class TransactionController extends Controller
                 'payment_amount' => $validated['payment_amount'],
                 'change_amount' => $change,
                 'service_type' => $validated['service_type'],
-                'status' => 'completed',
             ]);
 
             // Simpan detail transaksi
@@ -138,23 +133,31 @@ class TransactionController extends Controller
                 ]);
             }
 
+            //formated response
             $formattedResponse = [
                 'transaction_id' => $transaction->id,
+                'created_at' => $transaction->created_at,
+                'user_id' => $transaction->user_id,
+                'payment_method_id' => $transaction->payment_method_id,
+                'total' => $transaction->total,
                 'payment_amount' => $transaction->payment_amount,
                 'change_amount' => $transaction->change_amount,
-                'total' => $transaction->total,
+                'name_user' => $transaction->user->name,
+                'payment_method' => $transaction->paymentMethod->name,
                 'service_type' => $transaction->service_type,
-                'status' => $transaction->status,
                 'details' => $transaction->details->map(function ($detail) {
                     return [
                         'id' => $detail->id,
                         'product_id' => $detail->product_id,
+                        'name_product' => $detail->product->name,
                         'quantity' => $detail->quantity,
+                        'flavor_id' => $detail->flavor_id ?? null,
+                        'flavor' => $detail->flavor->name ?? null,
+                        'spicy_level_id' => $detail->spicy_level_id ?? null,
+                        'spicy_level' => $detail->spicyLevel->name ?? null,
+                        'note' => $detail->note,
                         'price' => $detail->price,
                         'subtotal' => $detail->subtotal,
-                        'note' => $detail->note,
-                        'flavor_id' => $detail->flavor_id,
-                        'spicy_level_id' => $detail->spicy_level_id,
                     ];
                 }),
             ];
@@ -164,7 +167,6 @@ class TransactionController extends Controller
                 'message' => 'Transaction created successfully',
                 'data' => $formattedResponse,
             ], 201);
-
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -179,27 +181,6 @@ class TransactionController extends Controller
     {
         $transaction = Transaction::with(['user', 'paymentMethod', 'details.product', 'details.flavor', 'details.spicyLevel'])->find($id);
 
-        $formattedResponse = [
-            'transaction_id' => $transaction->id,
-            'user_id' => $transaction->user_id,
-            'tota_price' => $transaction->total,
-            'name_user' => $transaction->user->name,
-            'payment_method' => $transaction->paymentMethod->name,
-            'details_transaction' => $transaction->details->map(function ($detail) {
-                return [
-                    'id' => $detail->id,
-                    'transaction_id' => $detail->transaction_id,
-                    'name_product' => $detail->product->name,
-                    'quantity' => $detail->quantity,
-                    'price' => $detail->price,
-                    'subtotal' => $detail->subtotal,
-                    'flavor' => $detail->flavor->name ?? null,
-                    'spicy_level' => $detail->spicyLevel->name ?? null,
-                    'note' => $detail->note,
-                ];
-            }),
-        ];
-
         if (!$transaction) {
             return response()->json([
                 'success' => false,
@@ -207,6 +188,35 @@ class TransactionController extends Controller
                 'data' => [],
             ], 404);
         }
+
+        //formated response
+        $formattedResponse = [
+            'transaction_id' => $transaction->id,
+            'created_at' => $transaction->created_at,
+            'user_id' => $transaction->user_id,
+            'payment_method_id' => $transaction->payment_method_id,
+            'total' => $transaction->total,
+            'payment_amount' => $transaction->payment_amount,
+            'change_amount' => $transaction->change_amount,
+            'name_user' => $transaction->user->name,
+            'payment_method' => $transaction->paymentMethod->name,
+            'service_type' => $transaction->service_type,
+            'details' => $transaction->details->map(function ($detail) {
+                return [
+                    'id' => $detail->id,
+                    'product_id' => $detail->product_id,
+                    'name_product' => $detail->product->name,
+                    'quantity' => $detail->quantity,
+                    'flavor_id' => $detail->flavor_id ?? null,
+                    'flavor' => $detail->flavor->name ?? null,
+                    'spicy_level_id' => $detail->spicy_level_id ?? null,
+                    'spicy_level' => $detail->spicyLevel->name ?? null,
+                    'note' => $detail->note,
+                    'price' => $detail->price,
+                    'subtotal' => $detail->subtotal,
+                ];
+            }),
+        ];
 
         return response()->json([
             'success' => true,
@@ -236,6 +246,35 @@ class TransactionController extends Controller
                 }
             }
 
+            //formated response (ambil data sebelum dihapus)
+            $formattedResponse = [
+                'transaction_id' => $transaction->id,
+                'created_at' => $transaction->created_at,
+                'user_id' => $transaction->user_id,
+                'payment_method_id' => $transaction->payment_method_id,
+                'total' => $transaction->total,
+                'payment_amount' => $transaction->payment_amount,
+                'change_amount' => $transaction->change_amount,
+                'name_user' => $transaction->user->name,
+                'payment_method' => $transaction->paymentMethod->name,
+                'service_type' => $transaction->service_type,
+                'details' => $transaction->details->map(function ($detail) {
+                    return [
+                        'id' => $detail->id,
+                        'product_id' => $detail->product_id,
+                        'name_product' => $detail->product->name,
+                        'quantity' => $detail->quantity,
+                        'flavor_id' => $detail->flavor_id ?? null,
+                        'flavor' => $detail->flavor->name ?? null,
+                        'spicy_level_id' => $detail->spicy_level_id ?? null,
+                        'spicy_level' => $detail->spicyLevel->name ?? null,
+                        'note' => $detail->note,
+                        'price' => $detail->price,
+                        'subtotal' => $detail->subtotal,
+                    ];
+                }),
+            ];
+
             // Hapus detail transaksi
             $transaction->details()->delete();
 
@@ -244,7 +283,8 @@ class TransactionController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Transaction deleted successfully',
+                'message' => 'Transaction with ID ' . $id . ' deleted successfully',
+                'data' => $formattedResponse,
             ], 200);
         } catch (\Exception $e) {
             return response()->json([

@@ -20,6 +20,11 @@ class TransactionDetail extends Model
         'note'
     ];
 
+    protected $casts = [
+        'price' => 'double',
+        'subtotal' => 'double',
+    ];
+
     //     Satu detail transaksi milik satu transaksi (BelongsTo).
     // Satu detail transaksi milik satu produk (BelongsTo).
     // Rasa dan level pedas opsional (BelongsTo ke flavors dan spicy_levels).

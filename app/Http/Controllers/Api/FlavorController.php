@@ -14,17 +14,30 @@ class FlavorController extends Controller
         if ($flavors->isEmpty()) {
             return response()->json(['success' => false, 'message' => 'No flavors found'], 404);
         }
-        return response()->json(['success' => true, 
-        'message' => 'Flavors retrieved successfully'
-        ,'data' => $flavors], 200);
+
+        $formattedFlavors = $flavors->map(function ($flavor) {
+            return [
+                'id' => $flavor->id,
+                'name' => $flavor->name
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Flavors retrieved successfully',
+            'data' => $formattedFlavors
+        ], 200);
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate(['name' => 'required|string|unique:flavors']);
         $flavor = Flavor::create($validated);
-        return response()->json(['success' => true,
-         'message' => 'Flavor created successfully', 'data' => $flavor], 201);
+        return response()->json([
+            'success' => true,
+            'message' => 'Flavor created successfully',
+            'data' => $flavor
+        ], 201);
     }
 
     public function show($id)
@@ -33,9 +46,15 @@ class FlavorController extends Controller
         if (!$flavor) {
             return response()->json(['success' => false, 'message' => 'Flavor not found'], 404);
         }
-        return response()->json(['success' => true,
-        'message' => 'Flavor retrieved successfully'
-        ,'data' => $flavor], 200);
+        $flavor = [
+            'id' => $flavor->id,
+            'name' => $flavor->name
+        ];
+        return response()->json([
+            'success' => true,
+            'message' => 'Flavor retrieved successfully',
+            'data' => $flavor
+        ], 200);
     }
 
     public function update(Request $request, $id)
@@ -56,7 +75,6 @@ class FlavorController extends Controller
             return response()->json(['success' => false, 'message' => 'Flavor not found'], 404);
         }
         $flavor->delete();
-        return response()->json(['success' => true, 'message' => 'Flavor deleted successfully'], 200 );
-    
+        return response()->json(['success' => true, 'message' => 'Flavor deleted successfully'], 200);
     }
 }
