@@ -12,7 +12,9 @@ class ProductController extends Controller
 {
     public function index()
     {
-        $products = Product::with('category')->get();
+        //sort products by name in ascending order
+        $products = Product::with('category')->orderBy('name', 'asc')->get();
+        // $products = Product::with('category')->get();
 
         return response()->json([
             'success' => true,
