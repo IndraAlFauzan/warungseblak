@@ -16,17 +16,14 @@ class TransactionDetailResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'product_id' => $this->product_id,
             'product_name' => $this->product->name ?? null,
-            'name_product' => $this->product->name ?? null, // untuk backward compatibility
             'quantity' => $this->quantity,
             'price' => $this->price,
             'subtotal' => $this->subtotal,
-            'flavor_id' => $this->flavor_id,
             'flavor' => optional($this->flavor)->name,
-            'spicy_level_id' => $this->spicy_level_id,
             'spicy_level' => optional($this->spicyLevel)->name,
             'note' => $this->note,
+
         ];
     }
 }

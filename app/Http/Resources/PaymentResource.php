@@ -48,10 +48,13 @@ class PaymentResource extends JsonResource
             'transactions' => $this->when($this->relationLoaded('transactions'), function () {
                 return $this->transactions->map(function ($transaction) {
                     return [
-                        'id' => $transaction->id,
+                        'transaction_id' => $transaction->id,
                         'order_no' => $transaction->order_no,
+                        'created_at' => $transaction->created_at?->format('Y-m-d H:i:s'),
+                        'updated_at' => $transaction->updated_at?->format('Y-m-d H:i:s'),
+                        'table_no' => optional($transaction->table)->table_no,
                         'customer_name' => $transaction->customer_name,
-                        'no_table' => $transaction->table->table_no,
+                        'user_id' => $transaction->user_id,
                         'service_type' => $transaction->service_type,
                         'status' => $transaction->status,
                         'allocated_amount' => $transaction->pivot->allocated_amount ?? '0',
@@ -62,7 +65,6 @@ class PaymentResource extends JsonResource
                         'detail_transaction' => $transaction->details ? $transaction->details->map(function ($detail) {
                             return [
                                 'id' => $detail->id,
-                                'product_id' => $detail->product_id,
                                 'product_name' => $detail->product->name ?? '',
                                 'quantity' => $detail->quantity,
                                 'price' => $detail->price,

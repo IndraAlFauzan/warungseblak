@@ -18,10 +18,18 @@ class PaymentMethodController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Payment methods retrieved successfully',
-            'data' => [
-                'offline' => $methods->where('type', 'offline')->values(),
-                'gateway' => $methods->where('type', 'gateway')->values(),
-            ]
+            'data' => $methods->map(function ($method) {
+                return [
+                    'id' => $method->id,
+                    'name' => $method->name,
+                    'type' => $method->type,
+                    'provider' => $method->provider,
+                    'channel' => $method->channel,
+                    'code' => $method->code,
+                    'active' => $method->active,
+                ];
+            })
+
         ], 200);
     }
 
