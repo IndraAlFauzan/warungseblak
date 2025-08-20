@@ -22,6 +22,11 @@ class PaymentResource extends JsonResource
             'change_amount' => $this->change_amount,
             'received_at' => $this->received_at?->format('Y-m-d H:i:s'),
             'note' => $this->note,
+            'status' => $this->status ?? 'paid',
+            'provider_ref' => $this->provider_ref,
+            'expires_at' => $this->expires_at?->format('Y-m-d H:i:s'),
+            'fee_amount' => $this->fee_amount,
+            'net_amount' => $this->net_amount,
             'created_at' => $this->created_at?->format('Y-m-d H:i:s'),
             'updated_at' => $this->updated_at?->format('Y-m-d H:i:s'),
 

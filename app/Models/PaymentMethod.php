@@ -7,14 +7,16 @@ use Illuminate\Database\Eloquent\Model;
 
 class PaymentMethod extends Model
 {
-    use HasFactory;
-
-    protected $fillable = ['name', 'description'];
-
-    //Satu metode pembayaran digunakan di banyak transaksi (One-to-Many).
-
-    public function transactions()
-    {
-        return $this->hasMany(Transaction::class);
-    }
+    protected $fillable = [
+        'name',
+        'description',
+        'type',
+        'provider',
+        'channel',
+        'code',
+        'active',
+        'fee_percent',
+        'fee_fixed',
+        'config' // NEW
+    ];
 }

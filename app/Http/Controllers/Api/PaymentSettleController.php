@@ -19,9 +19,34 @@ class PaymentSettleController extends Controller
     public function store(SettlePaymentRequest $request)
     {
         try {
-            $payment = $this->paymentService->settlePayment($request->validated());
+            $data = $request->validated();
+            $isCash = \App\Support\PaymentHelper::isCash($data['payment_method_id']);
 
-            // Load relationships for response
+            if ($isCash) {
+                // CASH → pakai service lama (langsung paid)
+                $payment = $this->paymentService->settlePayment($data);
+                $payment->load([
+                    'method',
+                    'cashier',
+                    'transactions.table',
+                    'transactions.details.product',
+                    'transactions.details.flavor',
+                    'transactions.details.spicyLevel'
+                ]);
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Payment settled',
+                    'data' => new \App\Http\Resources\PaymentResource($payment)
+                ], 201);
+            }
+
+            // GATEWAY → create pending + invoice url
+            [$payment, $checkoutUrl] = $this->paymentService->createGateway(
+                $data['payment_method_id'],
+                $data['transaction_ids'],
+                $data['note'] ?? null
+            );
             $payment->load([
                 'method',
                 'cashier',
@@ -33,13 +58,14 @@ class PaymentSettleController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Payment settled',
-                'data' => new PaymentResource($payment)
+                'message' => 'Payment created (pending). Complete via gateway.',
+                'checkout_url' => $checkoutUrl,
+                'data' => new \App\Http\Resources\PaymentResource($payment)
             ], 201);
         } catch (\Throwable $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to settle payment',
+                'message' => 'Failed to create/settle payment',
                 'error' => $e->getMessage()
             ], 500);
         }

@@ -42,7 +42,7 @@ class PaymentController extends Controller
      */
     public function show($id)
     {
-        $payment = Payment::with([
+        $p = Payment::with([
             'method',
             'cashier',
             'transactions.table',
@@ -51,19 +51,13 @@ class PaymentController extends Controller
             'transactions.details.spicyLevel'
         ])->find($id);
 
-        if (!$payment) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Payment not found',
-                'data' => []
-            ], 404);
-        }
+        if (!$p) return response()->json(['success' => false, 'message' => 'Payment not found'], 404);
 
         return response()->json([
             'success' => true,
             'message' => 'Payment retrieved',
-            'data' => new PaymentResource($payment)
-        ], 200);
+            'data' => new PaymentResource($p)
+        ]);
     }
 
     /**

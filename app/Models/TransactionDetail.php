@@ -21,8 +21,8 @@ class TransactionDetail extends Model
     ];
 
     protected $casts = [
-        'price' => 'double',
-        'subtotal' => 'double',
+        'price' => 'decimal:2',
+        'subtotal' => 'decimal:2',
     ];
 
     //     Satu detail transaksi milik satu transaksi (BelongsTo).

@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\SpicyLevelController;
 use App\Http\Controllers\Api\TableController;
 use App\Http\Controllers\Api\TransactionController;
+use App\Http\Controllers\Api\WebhookController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -86,16 +87,21 @@ Route::middleware(['json', 'auth:api', 'role:admin'])->group(function () {
     Route::delete('/tables/{id}', [TableController::class, 'destroy']);
 });
 
-// Digunakan ketika ingin melihat daftar transaksi sudah dibayar
+// Payment routes - accessible by both admin and cashier
+Route::middleware(['json', 'auth:api', 'role:admin,cashier'])->group(function () {
+    Route::get('/payments', [PaymentController::class, 'index']);     // kalau ini cuma buat laporan, bisa admin saja
+    Route::get('/payments/{id}', [PaymentController::class, 'show']); // FE polling status
+    Route::post('/payment-settle', [PaymentSettleController::class, 'store']); // create cash/gateway
+});
+
+// Payment deletion - admin only
 Route::middleware(['json', 'auth:api', 'role:admin'])->group(function () {
-    Route::get('/payments', [PaymentController::class, 'index']);
-    Route::get('/payments/{id}', [PaymentController::class, 'show']);
     Route::delete('/payments/{id}', [PaymentController::class, 'destroy']);
 });
 
-Route::middleware(['json', 'auth:api', 'role:admin'])->group(function () {
-    Route::post('/payment-settle', [PaymentSettleController::class, 'store']);
-});
+// Webhook endpoint - NO AUTH required, outside auth groups
+Route::post('/webhooks/xendit', [WebhookController::class, 'xendit']);
+
 
 Route::middleware(['json', 'auth:api', 'role:admin'])->group(function () {
     Route::get('/reports/daily', [ReportController::class, 'daily']);
