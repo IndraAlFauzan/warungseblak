@@ -10,28 +10,32 @@ class XenditGatewayClient
 {
     public function __construct(private Client $http) {}
 
-    // Create Invoice (Payment Link)
-    public function createInvoice(Payment $p): array
+    /**
+     * @return array [provider_ref, checkout_url, expires_at, est_fee, external_id]
+     */
+    public function createInvoice(Payment $p, array $opts = []): array
     {
         $externalId = 'INV-' . Str::orderedUuid();
 
+        $payload = [
+            'external_id' => $externalId,
+            'amount'      => (int) $p->amount,
+            'currency'    => 'IDR',
+            'description' => $opts['description'] ?? 'POS Payment',
+        ];
+
         $res = $this->http->post(config('services.xendit.base') . '/v2/invoices', [
-            'auth' => [config('services.xendit.secret'), ''],              // Basic Auth
+            'auth'    => [config('services.xendit.secret'), ''],
             'headers' => ['X-IDEMPOTENCY-KEY' => (string) Str::uuid()],
-            'json' => [
-                'external_id' => $externalId,
-                'amount'      => (int) $p->amount, // IDR integer
-                'currency'    => 'IDR',
-                'description' => 'POS Payment',
-            ],
+            'json'    => $payload,
             'timeout' => 10,
         ]);
 
         $data = json_decode($res->getBody(), true);
         $ref  = $data['id'] ?? $externalId;
-        $url  = $data['invoice_url'] ?? $data['payment_link']['url'] ?? null;
+        $url  = $data['invoice_url'] ?? null;
         $exp  = isset($data['expiry_date']) ? \Carbon\Carbon::parse($data['expiry_date']) : now()->addMinutes(30);
 
-        return [$ref, $url, $exp, 0.0]; // fee estimasi=0, isi aktual dari webhook jika tersedia
+        return [$ref, $url, $exp, 0.0, $externalId];
     }
 }

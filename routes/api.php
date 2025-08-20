@@ -92,6 +92,8 @@ Route::middleware(['json', 'auth:api', 'role:admin,cashier'])->group(function ()
     Route::get('/payments', [PaymentController::class, 'index']);     // kalau ini cuma buat laporan, bisa admin saja
     Route::get('/payments/{id}', [PaymentController::class, 'show']); // FE polling status
     Route::post('/payment-settle', [PaymentSettleController::class, 'store']); // create cash/gateway
+    Route::post('/payments/{id}/retry',  [PaymentController::class, 'retry'])->middleware('throttle:30,1');
+    Route::post('/payments/{id}/cancel', [PaymentController::class, 'cancel'])->middleware('throttle:30,1');
 });
 
 // Payment deletion - admin only

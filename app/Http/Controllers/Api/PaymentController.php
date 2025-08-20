@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\PaymentResource;
 use App\Models\Payment;
 use App\Services\PaymentService;
+use Illuminate\Http\Request;
 
 class PaymentController extends Controller
 {
@@ -89,6 +90,46 @@ class PaymentController extends Controller
                 'message' => 'Failed to delete payment',
                 'error' => $e->getMessage()
             ], 500);
+        }
+    }
+
+
+    public function retry($id, PaymentService $svc)
+    {
+        try {
+            [$payment, $checkoutUrl] = $svc->retryGateway((int) $id);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Payment link regenerated for remaining due',
+                'checkout_url' => $checkoutUrl,          // FE buka ini lagi
+                'data' => new PaymentResource($payment),
+            ], 200);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to retry payment',
+                'error' => $e->getMessage(),
+            ], 400);
+        }
+    }
+
+    public function cancel($id, Request $r, PaymentService $svc)
+    {
+        try {
+            $payment = $svc->cancelPending((int) $id, $r->input('reason'));
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Pending payment canceled and allocations released',
+                'data' => new PaymentResource($payment),
+            ], 200);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to cancel payment',
+                'error' => $e->getMessage(),
+            ], 400);
         }
     }
 }

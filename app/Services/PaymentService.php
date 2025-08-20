@@ -146,9 +146,9 @@ class PaymentService
                 'provider_ref' => $ref,
                 'expires_at' => $exp,
                 'fee_amount' => $estFee,
-                'net_amount' => $total - ($estFee ?? 0),
+                'net_amount' => $p->amount - ($estFee ?? 0),
+                'metadata' => array_merge($p->metadata ?? [], ['checkout_url' => $url]),
             ]);
-
             return [$p->fresh(['method', 'transactions']), $url];
         });
     }
@@ -228,6 +228,108 @@ class PaymentService
             // Delete payment transactions and payment
             $payment->paymentTransactions()->delete();
             return $payment->delete();
+        });
+    }
+
+    public function retryGateway(int $paymentId): array
+    {
+        return DB::transaction(function () use ($paymentId) {
+            /** @var Payment $p */
+            $p = Payment::with(['method', 'transactions'])->lockForUpdate()->findOrFail($paymentId);
+
+            if (!$p->method || $p->method->type !== 'gateway') {
+                throw new \Exception('Retry only allowed for gateway payments');
+            }
+            if (!in_array($p->status, ['pending', 'failed', 'expired'])) {
+                throw new \Exception('Only pending/failed/expired payments can be retried');
+            }
+
+            // Hitung ulang sisa due per transaksi (kurangi pending lain)
+            $total = 0.00;
+            foreach ($p->transactions as $t) {
+                $pendingReserved = DB::table('payment_transactions as pt')
+                    ->join('payments as pay', 'pay.id', '=', 'pt.payment_id')
+                    ->where('pay.status', 'pending')
+                    ->where('pt.transaction_id', $t->id)
+                    ->where('pay.id', '<>', $p->id) // selain payment ini
+                    ->sum('pt.allocated_amount');
+
+                $due = round($t->grand_total - $t->paid_total - $pendingReserved, 2);
+
+                if ($due > 0) {
+                    PaymentTransaction::updateOrCreate(
+                        ['payment_id' => $p->id, 'transaction_id' => $t->id],
+                        ['allocated_amount' => $due]
+                    );
+                    $total += $due;
+                } else {
+                    // tidak ada sisa → lepaskan dari pivot
+                    $p->transactions()->detach($t->id);
+                }
+            }
+
+            if ($total <= 0) {
+                throw new \Exception('Nothing left to pay for retry');
+            }
+
+            // Tandai payment siap di-reissue
+            $oldRef = $p->provider_ref;
+            $meta   = $p->metadata ?? [];
+            if (!empty($oldRef)) {
+                $meta['retries'][] = ['old_ref' => $oldRef, 'at' => now()->toIso8601String()];
+            }
+
+            $p->update([
+                'amount'       => $total,
+                'status'       => 'pending',
+                'provider_ref' => null,     // akan diisi setelah bikin invoice baru
+                'received_at'  => null,
+                'metadata'     => $meta,
+            ]);
+
+            // Buat invoice baru (Payment Link) TANPA redirect
+            [$ref, $url, $exp, $estFee, $externalId] = app(\App\Services\XenditGatewayClient::class)
+                ->createInvoice($p, [
+                    'description' => 'Retry POS Payment',
+                ]);
+
+            $p->update([
+                'provider_ref' => $ref,
+                'expires_at'   => $exp,
+                'fee_amount'   => $estFee,
+                'net_amount'   => $p->amount - ($estFee ?? 0),
+                'metadata'     => array_merge($p->metadata ?? [], [
+                    'checkout_url' => $url,
+                    'external_id'  => $externalId,
+                ]),
+            ]);
+
+            return [$p->fresh(['method', 'transactions']), $url];
+        });
+    }
+
+    public function cancelPending(int $paymentId, ?string $reason = null): Payment
+    {
+        return DB::transaction(function () use ($paymentId, $reason) {
+            /** @var Payment $p */
+            $p = Payment::with(['method', 'transactions'])->lockForUpdate()->findOrFail($paymentId);
+
+            if (!$p->method || $p->method->type !== 'gateway') {
+                throw new \Exception('Cancel only allowed for gateway payments');
+            }
+            if ($p->status !== 'pending') {
+                throw new \Exception('Only pending payments can be canceled');
+            }
+
+            $meta = $p->metadata ?? [];
+            $meta['canceled_at'] = now()->toIso8601String();
+            if ($reason) $meta['cancel_reason'] = $reason;
+
+            // Tandai failed & lepaskan alokasi
+            $p->update(['status' => 'failed', 'metadata' => $meta]);
+            $p->transactions()->detach();
+
+            return $p->fresh(['method', 'transactions']);
         });
     }
 }

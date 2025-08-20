@@ -27,6 +27,10 @@ class PaymentResource extends JsonResource
             'expires_at' => $this->expires_at?->format('Y-m-d H:i:s'),
             'fee_amount' => $this->fee_amount,
             'net_amount' => $this->net_amount,
+            // 'checkout_url' => $this->when(
+            //     $this->status === 'pending' && optional($this->expires_at)->isFuture(),
+            //     data_get($this->metadata, 'checkout_url')
+            // ),
             'created_at' => $this->created_at?->format('Y-m-d H:i:s'),
             'updated_at' => $this->updated_at?->format('Y-m-d H:i:s'),
 
